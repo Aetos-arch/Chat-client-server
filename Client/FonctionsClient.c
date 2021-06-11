@@ -1,7 +1,6 @@
 #include "FonctionsClient.h"
 
 int arreterProgramme = 0;
-int tube[2];
 
 void viderBuffer() {
   int c = 0;
@@ -154,8 +153,6 @@ void lancer(char *ip, int port) {
   char *messageServeur = lireMessage(socketClient);
   analyseMessageRecuParServeur(messageServeur);
   
-  pipe(tube);
-
   // Envoi
   pthread_t threadEnvoi;
   struct_envoyer_recevoir *envoi =
