@@ -1,46 +1,46 @@
-#include "FonctionsClient.h"
+#include "ClientFunctions.h"
 
-int arreterProgramme = 0;
+int stopProgram = 0;
 
-void viderBuffer() {
+void clearBuffer() {
   int c = 0;
   while (c != '\n' && c != EOF) {
     c = getchar();
   }
 }
 
-int lire(char *chaine, int longueur) {
-  char *positionEntree = NULL;
+int readInput(char *string, int length) {
+  char *newlinePos = NULL;
 
-  if (fgets(chaine, longueur, stdin) != NULL) {
-    positionEntree = strchr(chaine, '\n');
-    if (positionEntree != NULL) {
-      *positionEntree = '\0';
+  if (fgets(string, length, stdin) != NULL) {
+    newlinePos = strchr(string, '\n');
+    if (newlinePos != NULL) {
+      *newlinePos = '\0';
     } else {
-      viderBuffer();
+      clearBuffer();
     }
     return 1;
   } else {
-    viderBuffer();
+    clearBuffer();
     return 0;
   }
 }
 
-int envoyerMessage(int socket_client, char *message) {
-  int envoie = send(socket_client, message, strlen(message) + 1, 0);
-  if (envoie == -1) {
-    perror("[Erreur d'envoi de message]");
+int sendMessage(int clientSocket, char *message) {
+  int sent = send(clientSocket, message, strlen(message) + 1, 0);
+  if (sent == -1) {
+    perror("[Error sending message]");
     return -1;
   }
-  return envoie;
+  return sent;
 }
 
-char *lireMessage(int sockId) {
+char *readMessage(int socketId) {
   char *message = (char *)malloc(sizeof(char));
   char c = 1;
   int i = 0;
   while (c != '\0') {
-    recv(sockId, &c, 1, 0);
+    recv(socketId, &c, 1, 0);
     *(message + i) = c;
     i++;
     message = realloc(message, (i + 1) * sizeof(char));
@@ -49,130 +49,126 @@ char *lireMessage(int sockId) {
   return message;
 }
 
-int analyseMessageRecuParServeur(char *messageServeur) {
-  if (strcmp(messageServeur, "-2") == 0) {
-    perror("[Vous vous êtes connecté avec un nom qui existe déjà]");
+int analyzeServerMessage(char *serverMessage) {
+  if (strcmp(serverMessage, "-2") == 0) {
+    perror("[You have connected with an existing name]");
   } else {
     return 0;
   }
 }
 
-void envoiStructureMessage(struct_message *message) {
-  // -- Envoi du destinataire au serveur --
-  envoyerMessage(message->socket_client, message->destinataire);
-  // -- Envoi du message au serveur --
-  envoyerMessage(message->socket_client, message->message);
+void sendStructureMessage(struct_message *message) {
+  // -- Send recipient to the server --
+  sendMessage(message->clientSocket, message->recipient);
+  // -- Send message to the server --
+  sendMessage(message->clientSocket, message->message);
 }
 
-void *lireReponses(void *reponse) {
-  struct_envoyer_recevoir reponse_ = *((struct_envoyer_recevoir *)reponse);
-  int socketClient = reponse_.socket_client;
+void *readResponses(void *response) {
+  struct_send_receive response_ = *((struct_send_receive *)response);
+  int clientSocket = response_.clientSocket;
 
   while (1) {
-    char *destinataire = lireMessage(socketClient);
-    char *expediteur = lireMessage(socketClient);
-    char *message = lireMessage(socketClient);
+    char *recipient = readMessage(clientSocket);
+    char *sender = readMessage(clientSocket);
+    char *message = readMessage(clientSocket);
 
-    printf("\n---Contenu du message recu---\n\n");
-    printf("  <- De : %s\n", expediteur);
-    printf("  -> Pour : %s\n", destinataire);
-    printf("  -> Message : %s\n", message);
-    printf("\n------------------------\n\n");
+    printf("\n---Received Message Content---\n");
+    printf("  From: %s\n", sender);
+    printf("  To: %s\n", recipient);
+    printf("  Message: %s\n", message);
+    printf("-----------------------------\n");
   }
 }
 
-void *envoyerMessages(void *envoi) {
-  struct_envoyer_recevoir envoi_ = *((struct_envoyer_recevoir *)envoi);
-  int socketClient = envoi_.socket_client;
+void *sendMessages(void *send) {
+  struct_send_receive send_ = *((struct_send_receive *)send);
+  int clientSocket = send_.clientSocket;
 
-  char destinataire[20];
-  printf("\nAvec qui voulez-vous communiquer ? (Maximum 20 caractères)\n");
-  lire(destinataire, 20);
+  char recipient[20];
+  printf("\nWho do you want to communicate with? (Maximum 20 characters)\n");
+  readInput(recipient, 20);
   char message[50];
 
   while (1) {
-    printf(
-        "\n-- Entrez votre message --\n(Maximum 50 caractères, 'changer' pour "
-        "changer de destinataire, 'end' pour quitter le programme)\n");
-    lire(message, 50);
+    printf("\n-- Enter your message --\n");
+    printf("(Maximum 50 characters, 'change' to change recipient, 'end' to quit the program)\n");
+    readInput(message, 50);
 
-    if (strcmp(message, "changer") == 0) {
-      printf("\nAvec qui voulez-vous communiquer ? (Maximum 20 caractères)\n");
-      lire(destinataire, 20);
-      printf("\n-- Entrez votre message --\n(Maximum 50 caractères)\n");
-      lire(message, 50);
+    if (strcmp(message, "change") == 0) {
+      printf("\nWho do you want to communicate with? (Maximum 20 characters)\n");
+      readInput(recipient, 20);
+      printf("\n-- Enter your message --\n(Maximum 50 characters)\n");
+      readInput(message, 50);
     } else if (strcmp(message, "end") == 0) {
-      arreterProgramme = 1;
+      stopProgram = 1;
       pthread_exit(0);
     }
 
-    struct_message *messageAEnvoyer =
-        (struct_message *)malloc(sizeof(struct_message));
-    messageAEnvoyer->message = message;
-    messageAEnvoyer->destinataire = destinataire;
-    messageAEnvoyer->socket_client = socketClient;
-    envoiStructureMessage(messageAEnvoyer);
+    struct_message *messageToSend = (struct_message *)malloc(sizeof(struct_message));
+    messageToSend->message = message;
+    messageToSend->recipient = recipient;
+    messageToSend->clientSocket = clientSocket;
+    sendStructureMessage(messageToSend);
 
-    printf("\n  -> Message : [%s] bien envoyé\n", message);
+    printf("\nMessage [%s] sent successfully.\n", message);
   }
 }
 
-int seConnecterAuServeur(char *ip, int port) {
+int connectToServer(char *ip, int port) {
   struct sockaddr_in sa;
   sa.sin_family = AF_INET;
-  sa.sin_port = htons(port); // port du serveur
+  sa.sin_port = htons(port); // server port
   sa.sin_addr.s_addr = (long)inet_addr(ip);
 
-  // Creation Socket
+  // Create Socket
   int sd = socket(PF_INET, SOCK_STREAM, 0);
   if (sd == -1) {
-    perror("[Erreur de création de Socket]");
+    perror("[Socket creation error]");
     return -1;
   }
 
-  // Connexion
-  int connexion = connect(sd, (struct sockaddr *)&sa, sizeof(sa));
-  if (connexion == -1) {
-    perror("[Erreur de connexion]");
+  // Connect
+  int connection = connect(sd, (struct sockaddr *)&sa, sizeof(sa));
+  if (connection == -1) {
+    perror("[Connection error]");
     return -1;
   }
-  printf("[Bien connecté au serveur]\n");
+  printf("[Connected to the server]\n");
   return sd;
 }
 
-void lancer(char *ip, int port) {
+void launch(char *ip, int port) {
 
-  char nomClient[20];
-  printf("Comment vous appelez-vous ? (Maximum 20 caractères)\n");
-  lire(nomClient, 20);
-  printf("Bonjour %s ! :D\n", nomClient);
+  char clientName[20];
+  printf("What is your name? (Maximum 20 characters)\n");
+  readInput(clientName, 20);
+  printf("Hello %s! :D\n", clientName);
 
-  // Connexion serveur
-  int socketClient = seConnecterAuServeur(ip, port);
-  envoyerMessage(socketClient, nomClient);
-  char *messageServeur = lireMessage(socketClient);
-  analyseMessageRecuParServeur(messageServeur);
-  
-  // Envoi
-  pthread_t threadEnvoi;
-  struct_envoyer_recevoir *envoi =
-      (struct_envoyer_recevoir *)malloc(sizeof(struct_envoyer_recevoir));
-  envoi->socket_client = socketClient;
-  pthread_create(&threadEnvoi, NULL, (void *)envoyerMessages, (void *)envoi);
+  // Connect to server
+  int clientSocket = connectToServer(ip, port);
+  sendMessage(clientSocket, clientName);
+  char *serverMessage = readMessage(clientSocket);
+  analyzeServerMessage(serverMessage);
 
-  // Reponse
-  pthread_t threadReponse;
-  struct_envoyer_recevoir *reponse =
-      (struct_envoyer_recevoir *)malloc(sizeof(struct_envoyer_recevoir));
-  reponse->socket_client = socketClient;
-  pthread_create(&threadReponse, NULL, (void *)lireReponses, (void *)reponse);
+  // Sending
+  pthread_t sendThread;
+  struct_send_receive *sendData = (struct_send_receive *)malloc(sizeof(struct_send_receive));
+  sendData->clientSocket = clientSocket;
+  pthread_create(&sendThread, NULL, (void *)sendMessages, (void *)sendData);
+
+  // Receiving
+  pthread_t receiveThread;
+  struct_send_receive *receiveData = (struct_send_receive *)malloc(sizeof(struct_send_receive));
+  receiveData->clientSocket = clientSocket;
+  pthread_create(&receiveThread, NULL, (void *)readResponses, (void *)receiveData);
 
   // Join
-  pthread_join(threadEnvoi, NULL);
-  pthread_cancel(threadReponse);
+  pthread_join(sendThread, NULL);
+  pthread_cancel(receiveThread);
 
-  // Fin
-  envoyerMessage(socketClient, "end");
-  close(socketClient);
-  printf("[Bien déconnecté, au revoir %s !]\n", nomClient);
+  // End
+  sendMessage(clientSocket, "end");
+  close(clientSocket);
+  printf("[Disconnected. Goodbye, %s!]\n", clientName);
 }
