@@ -1,5 +1,4 @@
 #include <arpa/inet.h>
-#include <bits/pthreadtypes.h>
 #include <fcntl.h>
 #include <netinet/in.h>
 #include <pthread.h>
@@ -12,31 +11,31 @@
 #include <unistd.h>
 
 typedef struct struct_message {
-  char *destinataire;
+  char *recipient;
   char *message;
-  int socket_client;
+  int clientSocket;
 } struct_message;
 
-typedef struct struct_envoyer_recevoir {
-  int socket_client;
-} struct_envoyer_recevoir;
+typedef struct struct_send_receive {
+  int clientSocket;
+} struct_send_receive;
 
-void viderBuffer();
+void clearBuffer();
 
-int lire(char *chaine, int longueur);
+int readInput(char *chaine, int longueur);
 
-int envoyerMessage(int socket_client, char *message);
+int sendMessage(int clientSocket, char *message);
 
-char *lireMessage(int sockId);
+char *readMessage(int sockId);
 
-int analyseMessageRecuParServeur(char *messageServeur);
+int analyzeServerMessage(char *serverMessage);
 
-void envoiStructureMessage(struct_message *message);
+void sendStructureMessage(struct_message *message);
 
-void *lireReponses(void *reponse);
+void *readResponses(void *response);
 
-void *envoyerMessages(void *envoi);
+void *sendMessages(void *sendData);
 
-int seConnecterAuServeur(char *ip, int port);
+int connectToServer(char *ip, int port);
 
-void lancer(char *ip, int port);
+void launch(char *ip, int port);
