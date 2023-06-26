@@ -4,17 +4,17 @@ import java.net.Socket;
 import java.util.HashMap;
 import java.util.Map;
 
-public class ServerJava {
+public class Server {
 
     private ServerSocket servSock;
-    private Socket clientConnexion;
+    private Socket clientConnection;
     protected HashMap<String, Socket> clients = new HashMap<String, Socket>();
     protected HashMap<String, PrintWriter> clientsWriter = new HashMap<String, PrintWriter>();
     protected HashMap<String, BufferedReader> clientsReader = new HashMap<String, BufferedReader>();
 
-    public ServerJava(int port){
+    public ServerJava(int port) {
         try {
-            this.servSock= new ServerSocket(port);
+            this.servSock = new ServerSocket(port);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -32,17 +32,17 @@ public class ServerJava {
         return clients;
     }
 
-    public void getClient(String nom) {
-        this.clients.get(nom);
+    public Socket getClient(String name) {
+        return this.clients.get(name);
     }
 
-    public void setClient(String nom, Socket sock) {
-        this.clients.put(nom, sock);
+    public void setClient(String name, Socket socket) {
+        this.clients.put(name, socket);
     }
 
-    public void setConnexion(ServerSocket serverSocket){
+    public void setConnection(ServerSocket serverSocket) {
         try {
-            this.clientConnexion= this.servSock.accept();
+            this.clientConnection = this.servSock.accept();
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -52,15 +52,15 @@ public class ServerJava {
         return servSock;
     }
 
-    public Socket getClientConnexion() {
-        return clientConnexion;
+    public Socket getClientConnection() {
+        return clientConnection;
     }
 
-    public PrintWriter initSockWriter(Socket connexion){
+    public PrintWriter initSocketWriter(Socket connection) {
         PrintWriter toServer = null;
 
         try {
-            toServer= new PrintWriter(new OutputStreamWriter(connexion.getOutputStream()),true);
+            toServer = new PrintWriter(new OutputStreamWriter(connection.getOutputStream()), true);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -68,15 +68,15 @@ public class ServerJava {
         return toServer;
     }
 
-    public void sendRequest(String message, PrintWriter writer){
+    public void sendRequest(String message, PrintWriter writer) {
         writer.write(message);
         writer.flush();
     }
 
-    public BufferedReader initSockReader(Socket connexion){
+    public BufferedReader initSocketReader(Socket connection) {
         BufferedReader fromServer = null;
         try {
-            fromServer= new BufferedReader(new InputStreamReader(connexion.getInputStream()));
+            fromServer = new BufferedReader(new InputStreamReader(connection.getInputStream()));
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -84,12 +84,12 @@ public class ServerJava {
         return fromServer;
     }
 
-    public String getAnswer(BufferedReader reader){
-        String answer="";
+    public String getAnswer(BufferedReader reader) {
+        String answer = "";
         char c;
-        try{
-            while((c= (char)reader.read()) != '\0'){
-                answer+=c;
+        try {
+            while ((c = (char) reader.read()) != '\0') {
+                answer += c;
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -99,31 +99,27 @@ public class ServerJava {
 
     }
 
-    public void closeSocketWriter(PrintWriter writer){
+    public void closeSocketWriter(PrintWriter writer) {
         try {
             writer.close();
-        }
-        catch(Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    public void closeSocketReader(BufferedReader reader){
-        try{
+    public void closeSocketReader(BufferedReader reader) {
+        try {
             reader.close();
-        }catch (IOException e){
+        } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    public void closeConnexion(){
-        try{
-            this.clientConnexion.close();
-        }catch(IOException e){
+    public void closeConnection() {
+        try {
+            this.clientConnection.close();
+        } catch (IOException e) {
             e.printStackTrace();
         }
     }
-
-
-
 }

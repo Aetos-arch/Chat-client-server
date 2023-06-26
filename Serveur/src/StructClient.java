@@ -1,43 +1,38 @@
 public class StructClient {
-    String expediteur;
-    String destinataire;
-    String message;
+    private String sender;
+    private String recipient;
+    private String message;
 
-
-    public String getExpediteur() {
-        return expediteur;
+    public String getSender() {
+        return sender;
     }
 
-    public String getDestinataire() {
-        return destinataire;
+    public String getRecipient() {
+        return recipient;
     }
 
     public String getMessage() {
         return message;
     }
 
-    @Override
-    public String toString() {
-        return "StructClient{" +
-                "expediteur='" + expediteur + '\'' +
-                ", destinataire='" + destinataire + '\'' +
-                ", message='" + message + '\'' +
-                '}';
+    public void setSender(String sender) {
+        this.sender = sender;
     }
 
-    public StructClient(){
-
-    }
-
-    public void setExpediteur(String expediteur) {
-        this.expediteur = expediteur;
-    }
-
-    public void setDestinataire(String destinataire) {
-        this.destinataire = destinataire;
+    public void setRecipient(String recipient) {
+        this.recipient = recipient;
     }
 
     public void setMessage(String message) {
         this.message = message;
+    }
+
+    @Override
+    public String toString() {
+        return "StructClient{" +
+                "sender='" + sender + '\'' +
+                ", recipient='" + recipient + '\'' +
+                ", message='" + message + '\'' +
+                '}';
     }
 }
